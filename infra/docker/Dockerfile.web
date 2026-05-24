@@ -1,0 +1,38 @@
+# =============================================================================
+# CrewAI Enterprise Control Center — Web (Next.js)
+# Governance: Section 3 — Container Strategy
+# Multi-stage build: dependencies → build → production runner
+# =============================================================================
+
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages/shared-types/ packages/shared-types/
+COPY packages/ui/ packages/ui/
+RUN corepack enable && pnpm install --frozen-lockfile
+
+# Stage 2: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY apps/web/ apps/web/
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+RUN corepack enable && pnpm --filter web build
+
+# Stage 3: Production runner
+FROM node:20-alpine AS runner
+RUN addgroup --system --gid 1001 crewai && \
+    adduser --system --uid 1001 crewai
+WORKDIR /app
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+USER crewai
+EXPOSE 3000
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+CMD ["node", "apps/web/server.js"]

@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+build/
+.out/
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.ropeproject/
+*.pyc
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+.coverage
+coverage.xml
+*.lcov
+
+# Docker
+.docker/
+
+# Turbo
+.turbo/
+
+# Linting
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo

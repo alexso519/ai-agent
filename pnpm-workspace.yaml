@@ -1,0 +1,7 @@
+# CrewAI Enterprise Control Center — pnpm Workspace
+# Governance: Phase 0 — Monorepo Foundation
+# Enforced by: Architecture Governance Board
+
+packages:
+  - "apps/*"
+  - "packages/*"

@@ -1,0 +1,29 @@
+# =============================================================================
+# CrewAI Enterprise Control Center — Worker (Celery)
+# Governance: Section 3 — Container Strategy
+# Multi-stage build: builder → runtime
+# =============================================================================
+
+FROM python:3.12-slim AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY packages/shared-types/ packages/shared-types/
+COPY packages/crew-runtime/ packages/crew-runtime/
+COPY apps/worker/ apps/worker/
+RUN pip install --no-cache-dir -e packages/shared-types && \
+    pip install --no-cache-dir -e packages/crew-runtime && \
+    pip install --no-cache-dir -e apps/worker
+
+FROM python:3.12-slim AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 curl && rm -rf /var/lib/apt/lists/*
+RUN groupadd -r crewai && useradd -r -g crewai -d /app -s /sbin/nologin crewai
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+COPY --from=builder /app/packages/ /app/packages/
+COPY --from=builder /app/apps/worker/ /app/apps/worker/
+USER crewai
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD celery -A apps.worker.src.celery_app inspect ping || exit 1
+CMD ["celery", "-A", "apps.worker.src.celery_app", "worker", "--loglevel=info"]
